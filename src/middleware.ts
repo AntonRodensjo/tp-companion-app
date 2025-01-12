@@ -20,8 +20,6 @@ export async function middleware(request: NextRequest) {
         }
     ).then((res) => res.json());
 
-    console.log(sessionIsValid);
-
     if (!sessionIsValid) {
         redirectResponse.cookies.delete("session");
 
