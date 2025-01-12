@@ -13,9 +13,10 @@ model User {
   salt     String @db.VarChar(255)
   hash     String @db.VarChar(255)
 
-  session Session[]
-  games   UserInGame[]
-  teams   UserInTeam[]
+  session    Session[]
+  ownedGames Game[]
+  games      UserInGame[]
+  teams      UserInTeam[]
 }
 
 model Session {
@@ -28,7 +29,9 @@ model Session {
 
 model Game {
   id       String @id @default(uuid())
-  joinCode String
+  joinCode Int    @unique
+  owner    User   @relation(fields: [ownerId], references: [id])
+  ownerId  String
 
   players UserInGame[]
   teams   Team[]
