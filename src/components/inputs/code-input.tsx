@@ -26,11 +26,11 @@ export function CodeInput({ length, name }: { length: number; name?: string }) {
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
             />
-            <div className="text-4xl flex justify-between">
+            <div className="text-3xl sm:text-4xl flex justify-between gap-1">
                 {[...new Array(length)].map((_, index) => (
                     <div
                         key={index}
-                        className={`w-12 text-center border p-2 rounded transition-colors duration-100 ${
+                        className={`w-10 sm:w-12 text-center border p-2 rounded transition-colors duration-100 ${
                             isFocused
                                 ? digits.length == index
                                     ? "border-cyan-600"
