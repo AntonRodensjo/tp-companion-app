@@ -54,6 +54,7 @@ model Team {
   id     String @id @default(uuid())
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String
+  color  String
 
   players UserInTeam[]
 }

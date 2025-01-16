@@ -19,7 +19,7 @@ export default async function Home() {
             where: { userId: user.id },
             include: { game: { include: { owner: true } } },
         })
-    ).map((game) => game.game);
+    ).map((userInGame) => userInGame.game);
 
     return (
         <div className="h-screen flex flex-col relative">
