@@ -56,3 +56,33 @@ export async function joinGame(_: Response, form: FormData) {
 
     redirect(`/game/${game.id}`);
 }
+
+export async function startGame(_: Response, form: FormData) {
+    const user = await getUser();
+
+    if (!user) {
+        return error("Ej inloggad");
+    }
+
+    const gameId = form.get("game-id") as string;
+
+    if (!gameId) {
+        return error("Ingen spel-id gavs");
+    }
+
+    const game = await prisma.game.findUnique({
+        where: { id: gameId },
+    });
+
+    if (!game) {
+        return error("Ingen spel hittades med det givna id:t");
+    }
+
+    if (game.ownerId != user.id) {
+        return error("Du är inte ägare av spelet");
+    }
+
+    console.log(form.get("teams"));
+
+    return {};
+}

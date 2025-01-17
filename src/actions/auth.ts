@@ -27,7 +27,7 @@ async function createSession(username: string) {
         const cookie = await cookies();
         cookie.set("session", session.token, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV == "production",
             expires: expires,
         });
     } catch (_) {
