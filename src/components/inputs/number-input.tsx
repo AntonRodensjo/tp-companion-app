@@ -30,7 +30,7 @@ export function NumberInput({
         if (onChange) {
             onChange(value);
         }
-    }, [value]);
+    }, [value, onChange]);
 
     function decrement() {
         setValue((previousValue) =>

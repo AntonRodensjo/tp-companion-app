@@ -64,8 +64,8 @@ export default async function Game({
                         label="Antal lag:"
                         defaultValue={Math.min(players.length, 6)}
                         min={1}
-                        max={6}
-                        name="teams"
+                        max={Math.min(players.length, 6)}
+                        name="team-count"
                     />
                     <Button className="w-full">Starta spel</Button>
                 </Form>

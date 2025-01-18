@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma, User } from "@prisma/client";
 import { Response, error } from "@/lib/response";
 
 import { getUser } from "@/lib/user";
@@ -23,8 +24,9 @@ export async function createGame() {
         data: { ownerId: user.id, joinCode: code },
     });
 
-    await prisma.userInGame.create({
-        data: { gameId: game.id, userId: user.id },
+    await prisma.game.update({
+        where: { id: game.id },
+        data: { players: { connect: { id: user.id } } },
     });
 
     redirect(`/game/${game.id}`);
@@ -50,8 +52,9 @@ export async function joinGame(_: Response, form: FormData) {
         return error("Du är inte inloggad");
     }
 
-    await prisma.userInGame.create({
-        data: { gameId: game.id, userId: user.id },
+    await prisma.game.update({
+        where: { id: game.id },
+        data: { players: { connect: { id: user.id } } },
     });
 
     redirect(`/game/${game.id}`);
@@ -82,7 +85,39 @@ export async function startGame(_: Response, form: FormData) {
         return error("Du är inte ägare av spelet");
     }
 
-    console.log(form.get("teams"));
+    const players = await prisma.user.findMany({
+        where: { games: { some: { id: gameId } } },
+    });
+
+    const teamCount = parseInt(form.get("team-count") as string);
+
+    if (
+        Number.isNaN(teamCount) ||
+        teamCount < 0 ||
+        teamCount > Math.min(players.length, 6)
+    ) {
+        return error("Ogiltigt antal spelare");
+    }
+
+    const teamSlots = players.map((_, index) => index % teamCount);
+
+    const teams: Prisma.TeamCreateInput[] = new Array(teamCount).fill({
+        players: [],
+    });
+
+    for (const player of players) {
+        const slotIndex = Math.floor(Math.random() * teamSlots.length);
+
+        const slot = teamSlots[slotIndex];
+
+        (teams[slot].players as User[]).push(player);
+
+        teamSlots.splice(slotIndex, 1);
+    }
+
+    for (const team of teams) {
+        await prisma.team.create({ data: team });
+    }
 
     return {};
 }
