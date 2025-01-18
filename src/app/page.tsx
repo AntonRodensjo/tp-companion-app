@@ -14,12 +14,10 @@ export default async function Home() {
         return;
     }
 
-    const games = (
-        await prisma.userInGame.findMany({
-            where: { userId: user.id },
-            include: { game: { include: { owner: true } } },
-        })
-    ).map((userInGame) => userInGame.game);
+    const games = await prisma.game.findMany({
+        where: { players: { some: user } },
+        include: { owner: true },
+    });
 
     return (
         <div className="h-screen flex flex-col relative">

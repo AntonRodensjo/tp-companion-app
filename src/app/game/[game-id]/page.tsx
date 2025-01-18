@@ -1,7 +1,7 @@
 import { Button } from "@/components/button";
 import { Form } from "@/components/form";
 import { NumberInput } from "@/components/inputs/number-input";
-import { StarIcon } from "@heroicons/react/20/solid";
+import { PlayerList } from "@/components/player-list";
 import { getUser } from "@/lib/user";
 import { prisma } from "@/lib/database";
 import { redirect } from "next/navigation";
@@ -22,38 +22,23 @@ export default async function Game({
     if (
         !user ||
         !game ||
-        !game.players.find((player) => player.userId == user.id)
+        !game.players.find((player) => player.id == user.id)
     ) {
         redirect("/");
     }
 
     const isOwner = user.id == game.ownerId;
 
-    const players = (
-        await prisma.userInGame.findMany({
-            where: { gameId: game.id },
-            include: { user: true },
-        })
-    ).map((userInGame) => userInGame.user);
-
     return (
         <div className="p-8">
             <div className="text-3xl text-zinc-500">Kod:</div>
             <div className="text-7xl">{game.joinCode}</div>
             <div className="text-lg font-bold my-2">Spelare:</div>
-            <ul className="flex flex-col gap-2">
-                {players.map((player) => (
-                    <li
-                        key={player.id}
-                        className="bg-zinc-900 rounded px-2 py-1 flex items-center gap-1"
-                    >
-                        {player.id == game.ownerId && (
-                            <StarIcon className="size-5 text-yellow-500" />
-                        )}{" "}
-                        {player.username}
-                    </li>
-                ))}
-            </ul>
+            <PlayerList
+                gameId={game.id}
+                initialPlayers={game.players}
+                ownerId={game.ownerId}
+            />
             {isOwner && (
                 <Form
                     action={startGame}
@@ -62,9 +47,9 @@ export default async function Game({
                     <input type="hidden" name="game-id" value={game.id} />
                     <NumberInput
                         label="Antal lag:"
-                        defaultValue={Math.min(players.length, 6)}
+                        defaultValue={Math.min(game.players.length, 6)}
                         min={1}
-                        max={Math.min(players.length, 6)}
+                        max={Math.min(game.players.length, 6)}
                         name="team-count"
                     />
                     <Button className="w-full">Starta spel</Button>
