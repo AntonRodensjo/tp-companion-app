@@ -1,3 +1,4 @@
+import { User } from "@prisma/client";
 import { cookies } from "next/headers";
 import { prisma } from "./database";
 
@@ -19,4 +20,11 @@ export async function getUser() {
     }
 
     return session.user;
+}
+
+export function getPublicUser(user: User) {
+    return {
+        id: user.id,
+        username: user.username,
+    };
 }

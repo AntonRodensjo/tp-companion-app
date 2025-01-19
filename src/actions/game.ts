@@ -2,10 +2,12 @@
 
 import { Prisma, User } from "@prisma/client";
 import { Response, error } from "@/lib/response";
+import { getPublicUser, getUser } from "@/lib/user";
 
-import { getUser } from "@/lib/user";
+import { ServerEvent } from "@/types/socket";
 import { prisma } from "@/lib/database";
 import { redirect } from "next/navigation";
+import { sendSocketEvent } from "@/lib/socket";
 
 export async function createGame() {
     const user = await getUser();
@@ -40,7 +42,10 @@ export async function joinGame(_: Response, form: FormData) {
         return error("Felaktigt format på koden");
     }
 
-    const game = await prisma.game.findUnique({ where: { joinCode: code } });
+    const game = await prisma.game.findUnique({
+        where: { joinCode: code },
+        include: { players: true },
+    });
 
     if (!game) {
         return error("Det finns inget spel med den koden");
@@ -55,6 +60,11 @@ export async function joinGame(_: Response, form: FormData) {
     await prisma.game.update({
         where: { id: game.id },
         data: { players: { connect: { id: user.id } } },
+    });
+
+    sendSocketEvent(ServerEvent.PlayerJoin, {
+        targets: game.players.map((player) => player.id),
+        body: { game: game.id, user: getPublicUser(user) },
     });
 
     redirect(`/game/${game.id}`);
