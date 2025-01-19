@@ -19,6 +19,10 @@ export function PlayerList({
     useServerEvent<{ game: string; user: User }>(
         ServerEvent.PlayerJoin,
         (data) => {
+            if (data.game != gameId) {
+                return;
+            }
+
             setPlayers((previousValue) => [...previousValue, data.user]);
         }
     );
