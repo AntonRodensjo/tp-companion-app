@@ -33,19 +33,24 @@ model Game {
   owner    User   @relation(fields: [ownerId], references: [id], name: "GameOwner")
   ownerId  String
 
-  players User[] @relation(name: "UserInGame")
-  teams   Team[]
+  players User[]      @relation(name: "UserInGame")
+  rounds  GameRound[]
 }
 
 model GameRound {
-  id String @id @default(uuid())
+  id     String  @id @default(uuid())
+  active Boolean @default(true)
+  game   Game    @relation(fields: [gameId], references: [id])
+  gameId String
+
+  teams Team[]
 }
 
 model Team {
-  id     String @id @default(uuid())
-  game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
-  color  String
+  id      String    @id @default(uuid())
+  round   GameRound @relation(fields: [roundId], references: [id])
+  roundId String
+  color   String
 
   players User[]
 }

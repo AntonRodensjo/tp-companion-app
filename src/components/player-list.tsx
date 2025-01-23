@@ -1,6 +1,6 @@
 "use client";
 
-import { ServerEvent } from "@/types/socket";
+import { ServerEvent } from "@/lib/server-event";
 import { StarIcon } from "@heroicons/react/20/solid";
 import { User } from "@prisma/client";
 import { useServerEvent } from "@/hooks/use-server-event";

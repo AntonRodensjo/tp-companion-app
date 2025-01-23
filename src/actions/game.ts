@@ -2,12 +2,11 @@
 
 import { Prisma, User } from "@prisma/client";
 import { Response, error } from "@/lib/response";
+import { ServerEvent, sendServerEvent } from "@/lib/server-event";
 import { getPublicUser, getUser } from "@/lib/user";
 
-import { ServerEvent } from "@/types/socket";
 import { prisma } from "@/lib/database";
 import { redirect } from "next/navigation";
-import { sendSocketEvent } from "@/lib/socket";
 
 export async function createGame() {
     const user = await getUser();
@@ -62,7 +61,7 @@ export async function joinGame(_: Response, form: FormData) {
         data: { players: { connect: { id: user.id } } },
     });
 
-    sendSocketEvent(ServerEvent.PlayerJoin, {
+    sendServerEvent(ServerEvent.PlayerJoin, {
         targets: game.players.map((player) => player.id),
         body: { game: game.id, user: getPublicUser(user) },
     });
@@ -85,6 +84,7 @@ export async function startGame(_: Response, form: FormData) {
 
     const game = await prisma.game.findUnique({
         where: { id: gameId },
+        include: { players: true },
     });
 
     if (!game) {
@@ -95,8 +95,10 @@ export async function startGame(_: Response, form: FormData) {
         return error("Du är inte ägare av spelet");
     }
 
-    const players = await prisma.user.findMany({
-        where: { games: { some: { id: gameId } } },
+    const gameRound = await prisma.gameRound.create({
+        data: {
+            gameId: game.id,
+        },
     });
 
     const teamCount = parseInt(form.get("team-count") as string);
@@ -104,30 +106,39 @@ export async function startGame(_: Response, form: FormData) {
     if (
         Number.isNaN(teamCount) ||
         teamCount < 0 ||
-        teamCount > Math.min(players.length, 6)
+        teamCount > Math.min(game.players.length, 6)
     ) {
         return error("Ogiltigt antal spelare");
     }
 
-    const teamSlots = players.map((_, index) => index % teamCount);
+    const teamSlots = game.players.map((_, index) => index % teamCount);
 
-    const teams: Prisma.TeamCreateInput[] = new Array(teamCount).fill({
-        players: [],
-    });
+    const teams: User[][] = new Array(teamCount).fill([]);
 
-    for (const player of players) {
+    for (const player of game.players) {
         const slotIndex = Math.floor(Math.random() * teamSlots.length);
 
         const slot = teamSlots[slotIndex];
 
-        (teams[slot].players as User[]).push(player);
+        teams[slot].push(player);
 
         teamSlots.splice(slotIndex, 1);
     }
 
     for (const team of teams) {
-        await prisma.team.create({ data: team });
+        await prisma.team.create({
+            data: {
+                roundId: gameRound.id,
+                color: "#ff0000",
+                players: { connect: team },
+            },
+        });
     }
+
+    sendServerEvent(ServerEvent.StartGameRound, {
+        targets: game.players.map((player) => player.id),
+        body: { game: game.id, round: gameRound },
+    });
 
     return {};
 }
